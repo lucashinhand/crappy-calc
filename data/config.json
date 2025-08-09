@@ -1,0 +1,24 @@
+{
+    "csv_path": "data/pricing_data.csv",
+    "buckets": {
+        "inputs": [
+            "Print quanity",
+            "Cover type",
+            "Book size",
+            "Page count",
+            "Colour printing",
+            "Shipping ",
+            "Ships to",
+            "Currency"
+        ],
+        "answer": [
+            "Total price",
+            "Per book price"
+        ],
+        "details": [
+            "Print Days",
+            "Minimum Shipping Days",
+            "Max Shipping Days"
+        ]
+    }
+}
