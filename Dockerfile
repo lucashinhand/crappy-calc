@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-ARG PORT=8080
+ENV PORT=8080
 
 WORKDIR /app
 
@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE ${PORT}
 
-CMD ["streamlit", "run", "app.py", "--server.port=${PORT}", "--server.address=0.0.0.0"]
+CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
