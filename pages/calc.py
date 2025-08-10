@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+from io import StringIO
 from st_aggrid import AgGrid
 from gcp import fetch_data_from_gcp_bucket
 
@@ -27,7 +28,7 @@ def load_config():
 def load_data_df_from_bucket(csv_path):
     data_string = fetch_data_from_gcp_bucket(csv_path)
     if data_string:
-        return pd.read_csv(pd.compat.StringIO(data_string))
+        return pd.read_csv(StringIO(data_string))
  
 def load_data(csv_path):
     if GCP_BUCKET_NAME is not None:
