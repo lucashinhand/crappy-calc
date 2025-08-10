@@ -9,6 +9,7 @@ env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   GCP_REGION: ${{ vars.GCP_REGION }}
   GCP_BUCKET_NAME: ${{ vars.GCP_BUCKET_NAME }}
+  CUSTOM_TITLE: ${{ vars.CUSTOM_TITLE }}
   DOCKER_IMAGE_NAME: "crappy-calc"
 
 jobs:
@@ -57,7 +58,7 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --service-account ${{ secrets.GCP_PUBLIC_APP_SA }} \
-            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }}" \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},CUSTOM_TITLE={{ env.CUSTOM_TITLE }}" \
             --allow-unauthenticated \
             --project ${{ env.GCP_PROJECT_ID }}
 
@@ -68,7 +69,7 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --service-account ${{ secrets.GCP_PRIVATE_IAP_APP_SA }} \
-            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},ADMIN_ENABLED=true" \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},CUSTOM_TITLE={{ env.CUSTOM_TITLE }},ADMIN_ENABLED=true" \
             --no-allow-unauthenticated \
             --project ${{ env.GCP_PROJECT_ID }}
 
