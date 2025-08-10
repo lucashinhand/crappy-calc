@@ -1,5 +1,5 @@
 {
-    "csv_path": "data/pricing_data.csv",
+    "csv_path": "data/data.csv",
     "buckets": {
         "inputs": [
             "Print quanity",
@@ -7,18 +7,20 @@
             "Book size",
             "Page count",
             "Colour printing",
-            "Shipping ",
-            "Ships to",
-            "Currency"
+            "Shipping (AIR/SEA/EXCL)",
+            "Countries"
         ],
         "answer": [
-            "Total price",
-            "Per book price"
+            "Total price incl shipping and margin"
         ],
         "details": [
-            "Print Days",
-            "Minimum Shipping Days",
-            "Max Shipping Days"
+            "Min Shipping Days",
+            "Max Shipping Days",
+            "Print Days"
+        ],
+        "admin": [
+            "Source currency",
+            "Printer name"
         ]
     }
 }

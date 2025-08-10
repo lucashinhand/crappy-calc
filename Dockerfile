@@ -9,6 +9,4 @@ COPY . .
 
 EXPOSE 8501
 
-ENV STREAMLIT_ENTRYPOINT="calc.py"
-
-CMD streamlit run ${STREAMLIT_ENTRYPOINT} --server.port=8501 --server.address=0.0.0.0
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

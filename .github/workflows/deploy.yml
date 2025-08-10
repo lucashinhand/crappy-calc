@@ -7,7 +7,8 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: "us-central1"
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_BUCKET_NAME: ${{ vars.GCP_BUCKET_NAME }}
   DOCKER_IMAGE_NAME: "crappy-calc"
 
 jobs:
@@ -56,18 +57,18 @@ jobs:
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --service-account ${{ secrets.GCP_PUBLIC_APP_SA }} \
-            --set-env-vars="STREAMLIT_ENTRYPOINT=calc.py,GCP_BUCKET_NAME=${{ secrets.GCP_BUCKET_NAME }}" \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }}" \
             --allow-unauthenticated \
             --project ${{ env.GCP_PROJECT_ID }}
 
       - name: Deploy Private / IAP-Protected Service (config.py)
         run: |
-          gcloud run deploy cappy-calc-config-iap \
+          gcloud run deploy crappy-calc-iap-admin \
             --image ${{ env.IMAGE_PATH }} \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
             --service-account ${{ secrets.GCP_PRIVATE_IAP_APP_SA }} \
-            --set-env-vars="STREAMLIT_ENTRYPOINT=config.py,GCP_BUCKET_NAME=${{ secrets.GCP_BUCKET_NAME }}" \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},ADMIN_ENABLED=true" \
             --no-allow-unauthenticated \
             --project ${{ env.GCP_PROJECT_ID }}
 
