@@ -10,7 +10,7 @@ def save_config(config):
     if GCP_ENABLED:
         # Save to GCP bucket
         file_path = "config.json"
-        save_data_to_gcp_bucket(config, file_path, content_type='application/json')
+        save_data_to_gcp_bucket(json.dumps(config), file_path, content_type='application/json')
     else:
         # Save to local file
         if not os.path.exists("data"):
