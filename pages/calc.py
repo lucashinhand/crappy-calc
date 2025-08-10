@@ -3,11 +3,19 @@ import pandas as pd
 import json
 import os
 from st_aggrid import AgGrid
+from gcp import fetch_data_from_gcp_bucket
+
 
 ADMIN_ENABLED = os.getenv("ADMIN_ENABLED", "false").lower() == "true"
+GCP_BUCKET_NAME = os.getenv("GCP_BUCKET_NAME", None)
 
 # --- Helper Functions ---
 def load_config():
+    if GCP_BUCKET_NAME is not None:
+        config_data = fetch_data_from_gcp_bucket("config.json")
+        if config_data:
+            return json.loads(config_data)
+
     """Loads the configuration file."""
     config_path = os.path.join("data", "config.json")
     if os.path.exists(config_path):
@@ -15,8 +23,16 @@ def load_config():
             return json.load(f)
     return None
 
+@st.cache_data # caching because why not - config csv_path will cache bust this
+def load_data_df_from_bucket(csv_path):
+    data_string = fetch_data_from_gcp_bucket(csv_path)
+    if data_string:
+        return pd.read_csv(pd.compat.StringIO(data_string))
+ 
 def load_data(csv_path):
-    """Loads the data from the CSV file."""
+    if GCP_BUCKET_NAME is not None:
+        return load_data_df_from_bucket(csv_path)
+        
     if os.path.exists(csv_path):
         return pd.read_csv(csv_path)
     return None

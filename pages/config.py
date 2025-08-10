@@ -133,7 +133,7 @@ if uploaded_file is not None:
             st.rerun()
 
         st.divider()
-        st.header(f"Step {step+1} of {len(steps)}: Assign Columns")
+        st.header(f"Step {step + 1} of {len(steps)}: Assign Columns")
 
         def get_available_options(options, steps, step):
             selected = set()
@@ -196,11 +196,9 @@ if uploaded_file is not None:
                                     "admin": st.session_state.admin_info
                                 }
                             }
-                            config_path = os.path.join("data", "config.json")
-                            with open(config_path, "w") as f:
-                                json.dump(config, f, indent=4)
+                            save_config(config)
                             st.toast("You can now navigate to the 'Calculator' page to use your new tool.", icon="ℹ️")
-                            st.toast(f"Configuration saved successfully to `{config_path}`!", icon="✅")
+                            st.toast(f"Configuration saved successfully!", icon="✅")
                             st.balloons()
                             
     except Exception as e:

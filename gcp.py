@@ -1,6 +1,9 @@
 import google.cloud.storage as gcs
 import os
 
+# if you want abstraction you can go to a modern art museum lmao
+# this will do for now
+
 BUCKET_NAME = os.getenv("GCP_BUCKET_NAME", "your-bucket-name") 
 
 def fetch_data_from_gcp_bucket(filename):
