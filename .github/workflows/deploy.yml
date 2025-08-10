@@ -1,0 +1,88 @@
+name: Build and Deploy to crappy calc to docker hub and Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_BUCKET_NAME: ${{ vars.GCP_BUCKET_NAME }}
+  CUSTOM_TITLE: ${{ vars.CUSTOM_TITLE }}
+  DOCKER_IMAGE_NAME: "crappy-calc"
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "write"
+      id-token: "write"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_PATH="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}"
+
+          docker build -t ${IMAGE_PATH} .
+
+          docker push ${IMAGE_PATH}
+
+          echo "IMAGE_PATH=${IMAGE_PATH}" >> $GITHUB_ENV
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Public Service (calc.py)
+        run: |
+          gcloud run deploy crappy-calc-public \
+            --image ${{ env.IMAGE_PATH }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --service-account ${{ secrets.GCP_PUBLIC_APP_SA }} \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},CUSTOM_TITLE={{ env.CUSTOM_TITLE }}" \
+            --allow-unauthenticated \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Deploy Private / IAP-Protected Service (config.py)
+        run: |
+          gcloud run deploy crappy-calc-iap-admin \
+            --image ${{ env.IMAGE_PATH }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --service-account ${{ secrets.GCP_PRIVATE_IAP_APP_SA }} \
+            --set-env-vars="GCP_BUCKET_NAME=${{ env.GCP_BUCKET_NAME }},CUSTOM_TITLE={{ env.CUSTOM_TITLE }},ADMIN_ENABLED=true" \
+            --no-allow-unauthenticated \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            Successful deployment of commit `${{ github.sha }}`.
+
+            **Image Deployed:** `${{ env.IMAGE_PATH }}`
+          draft: false
+          prerelease: false

@@ -3,16 +3,19 @@ import pandas as pd
 import json
 import os
 from st_aggrid import AgGrid
+from gcp import fetch_data_from_gcp_bucket
 
-# --- Page Configuration ---
-st.set_page_config(
-    page_title="Price Calculator",
-    page_icon="💰",
-    layout="wide"
-)
+
+ADMIN_ENABLED = os.getenv("ADMIN_ENABLED", "false").lower() == "true"
+GCP_BUCKET_NAME = os.getenv("GCP_BUCKET_NAME", None)
 
 # --- Helper Functions ---
 def load_config():
+    if GCP_BUCKET_NAME is not None:
+        config_data = fetch_data_from_gcp_bucket("config.json")
+        if config_data:
+            return json.loads(config_data)
+
     """Loads the configuration file."""
     config_path = os.path.join("data", "config.json")
     if os.path.exists(config_path):
@@ -20,8 +23,16 @@ def load_config():
             return json.load(f)
     return None
 
+@st.cache_data # caching because why not - config csv_path will cache bust this
+def load_data_df_from_bucket(csv_path):
+    data_string = fetch_data_from_gcp_bucket(csv_path)
+    if data_string:
+        return pd.read_csv(pd.compat.StringIO(data_string))
+ 
 def load_data(csv_path):
-    """Loads the data from the CSV file."""
+    if GCP_BUCKET_NAME is not None:
+        return load_data_df_from_bucket(csv_path)
+        
     if os.path.exists(csv_path):
         return pd.read_csv(csv_path)
     return None
@@ -60,9 +71,9 @@ st.sidebar.markdown("Use the options below to find a price.")
 
 filters = {}
 buckets = config["buckets"]
-input_cols = buckets["inputs"]
-answer_cols = buckets["answer"]
-detail_cols = buckets["details"]
+input_cols = buckets.get("inputs", [])
+answer_cols = buckets.get("answer", [])
+detail_cols = buckets.get("details", [])
 admin_cols = buckets.get("admin", [])
 
 for col in input_cols:
@@ -89,20 +100,14 @@ if filtered_df.empty:
     st.warning("No options found for the selected criteria. Please adjust your filters.")
 else:
     st.markdown(f"Found **{len(filtered_df)}** matching options.")
-    # styled_df = filtered_df.copy()[display_cols].map(lambda x: f":small[{x}]" if pd.notna(x) else "")
 
-    # implement this https://arnaudmiribel.github.io/streamlit-extras/extras/grid/
-    # st.markdown(generate_gh_markdown_table(styled_df))    
-
-    # gb.configure_pagination(paginationAutoPageSize=True)
-    # gb.configure_side_bar()
-    # # Enable text wrapping for all columns
-    # for col in grid_df.columns:
-    #     gb.configure_column(col, wrapText=True, autoHeight=True)
-    grid_df = filtered_df[input_cols + answer_cols + detail_cols].copy()
+    cols_to_view = input_cols + answer_cols + detail_cols
+    if ADMIN_ENABLED:
+        cols_to_view += admin_cols
+  
+    grid_df = filtered_df[cols_to_view].copy()
     grid_df = grid_df.reset_index()
-    grid_options = {
-        "columnDefs": [
+    column_defs = [
             {
                 "field": "Inputs",
                 "children": [
@@ -122,7 +127,24 @@ else:
                     for col in detail_cols
                 ],
             },
+        ]
+    
+    if ADMIN_ENABLED:
+        column_defs.append(
             {
+                "field": "Admin Info",
+                "children": [
+                    {
+                        "field": col,
+                        "hide": True if grid_df[col].isnull().all() else False,  # Hide column if all values are NaN
+                    }
+                    for col in admin_cols
+                ],
+            }
+        )
+
+    column_defs.append(
+        {
                 "field": "Answers",
                 "children": [
                     {
@@ -140,9 +162,11 @@ else:
                 "headerClass": "bold-header",
                 "resizable": False,
                 
-            },
-            
-        ],
+            }
+    )
+
+    grid_options = {
+        "columnDefs": column_defs,
         "defaultColDef": {
             "cellStyle": {"textAlign": "left"},
             "suppressMenu": True,
@@ -178,9 +202,4 @@ else:
         theme="alpine",
         custom_css=custom_css,
         height=500,  # Set grid height in pixels
-
     )
-
-
-    
-
