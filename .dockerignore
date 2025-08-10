@@ -1,0 +1,22 @@
+# application
+data/
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv
+venv/
+
+# IDE / OS specific
+.vscode/
+.idea/
+.DS_Store
