@@ -17,7 +17,6 @@ def load_config():
         if config_data:
             return json.loads(config_data)
 
-    """Loads the configuration file."""
     config_path = os.path.join("data", "config.json")
     if os.path.exists(config_path):
         with open(config_path, "r") as f:
@@ -39,7 +38,6 @@ def load_data(csv_path):
     return None
 
 def generate_gh_markdown_table(df):
-    """Generates a GitHub-flavored markdown table from a DataFrame, using :small[value] for each cell."""
     if df.empty:
         return ""
     columns = df.columns.tolist()
@@ -81,7 +79,8 @@ for col in input_cols:
     options = sorted(df[col].dropna().unique().tolist())
     
     if pd.api.types.is_numeric_dtype(df[col]) and df[col].nunique() > 10:
-        selected_val = st.sidebar.select_slider(f"Select {col}", options=options, value=options[0])
+        options_as_str = [str(x) for x in options]
+        selected_val = st.sidebar.select_slider(f"Select {col}", options=options_as_str, value=options_as_str[0])
         filters[col] = selected_val
     else:
         options_with_all = ["All"] + options
@@ -96,6 +95,8 @@ for key, value in filters.items():
 
 # --- Display Results ---
 st.header("Available Options")
+
+tab1, tab2 = st.tabs(["Grid View", "List View"])
 
 if filtered_df.empty:
     st.warning("No options found for the selected criteria. Please adjust your filters.")
